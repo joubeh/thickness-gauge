@@ -1,0 +1,68 @@
+<div class="container mt-3">
+    <form action="/setting/update" method="post">
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="scan_time" class="form-label">زمان اسکن (ساعت)</label>
+                <input type="number" class="form-control" id="scan_time" name="scan_time" value="<%= setting.scan_time %>" required>
+            </div>
+            <div class="mb-3 col">
+                <label for="report_period" class="form-label">بازه زمانی گزارش (دقیقه)</label>
+                <input type="number" class="form-control" id="report_period" name="report_period" value="<%= setting.report_period %>" required>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="popup_time" class="form-label">تایم پاپ آپ (ثانیه)</label>
+                <input type="number" class="form-control" id="popup_time" name="popup_time" value="<%= setting.popup_time %>" required>
+            </div>
+            <div class="mb-3 col">
+                <label for="password" class="form-label">رمز تنظیمات</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">ذخیره</button>
+    </form>
+    <hr>
+    <h4>
+        سنسورها
+    </h4>
+    <h4>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">افزودن سنسور جدید</button>
+    </h4>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header" dir="ltr">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">افزودن سنسور جدید</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/sensors/create" method="post" id="new_sensor_form">
+                    <div class="mb-3">
+                        <label for="address" class="form-label">آدرس سنسور</label>
+                        <input type="number" class="form-control" id="address" name="address" required>
+                    </div>
+                    <div>
+                        <label for="password" class="form-label">رمز تنظیمات</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button id="add_sensor" type="button" class="btn btn-primary">ذخیره</button>
+                <script>
+                    document.getElementById('add_sensor').addEventListener('click', function(e){
+                        document.getElementById('new_sensor_form').submit()
+                    })
+                </script>
+            </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <% for(let i=0; i<sensors.length; i++) { %>
+            <a href="/sensor/<%= sensors[i].address %>" class="btn btn-primary mt-1">سنسور <%= sensors[i].address %></a>
+        <% } %>
+    </div>
+</div>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ضخات سنج</title>
+    <link href="/assets/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/bootstrap-icons.css">
+    <script src="/assets/chart.umd.min.js"></script>
+    <script src="/assets/bootstrap.bundle.min.js"></script>
+    <link href="/assets/mds.bs.datetimepicker.style.css" rel="stylesheet"/>
+    <script src="/assets/mds.bs.datetimepicker.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">ضخامت سنج</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-envelope-paper"></i> گزارش
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/report/error-reporting">
+                            گزارش خطا
+                        </a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-workspace"></i>
+                        تنظیمات اپراتور
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/product/create">
+                            افزودن محصول
+                            <i class="bi bi-file-earmark-plus"></i>
+                        </a></li>
+                        <li><a class="dropdown-item" href="/products">
+                            لیست محصولات
+                            <i class="bi bi-list-task"></i>
+                        </a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/setting">
+                        <i class="bi bi-gear-fill"></i>
+                        تنظیمات دستگاه
+                    </a>
+                </li>
+            </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="mt-3 row mx-3">
+        <div class="col-3 border border-primary p-3">
+            <form action="/sensor/<%= sensor.address %>/update" method="post">
+                <div class="mb-2">
+                    <label for="sampling_min" class="form-label">مینیمم نمونه برداری</label>
+                    <input type="number" class="form-control" id="sampling_min" name="sampling_min" value="<%= sensor.sampling_min %>" required>
+                </div>
+                <div class="mb-2">
+                    <label for="sampling_max" class="form-label">ماکسیمم نمومه برداری</label>
+                    <input type="number" class="form-control" id="sampling_max" name="sampling_max" value="<%= sensor.sampling_max %>" required>
+                </div>
+                <div class="mb-2">
+                    <label for="micron_ratio" class="form-label">ضریب تبدیل به میکرون</label>
+                    <input type="text" class="form-control" id="micron_ratio" name="micron_ratio" value="<%= sensor.micron_ratio %>" required>
+                </div>
+                <div class="mb-2" dir="ltr">
+                    <label for="sh_period" class="form-label">SH Period</label>
+                    <input type="number" class="form-control" id="sh_period" name="sh_period" value="<%= sensor.sh_period %>" required>
+                </div>
+                <div class="mb-2" dir="ltr">
+                    <label for="icg_period" class="form-label">ICG Period</label>
+                    <input type="number" class="form-control" id="icg_period" name="icg_period" value="<%= sensor.icg_period %>" required>
+                </div>
+                <div class="mb-2" dir="ltr">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sg" id="sg1" value="0" checked>
+                        <label class="form-check-label" for="sg1">
+                            Single
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sg" id="sg2" value="1">
+                        <label class="form-check-label" for="sg2">
+                            Continuous
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-2" dir="ltr">
+                    <label for="average" class="form-label">Average</label>
+                    <input type="number" class="form-control" id="average" name="average" value="<%= sensor.average %>" required>
+                </div>
+                <div class="mb-2">
+                    <label for="password" class="form-label">رمز تنظیمات</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">ذخیره</button>
+            </form>
+        </div>
+        <div class="col-9">
+            <canvas id="myChart"></canvas>
+        </div>
+        <script>
+            const SENSOR_ADDRESS = '<%= sensor.address %>'
+            let labels = []
+            for(let i=1; i<3695; i++) labels.push(i)
+            fetch('/api/sensor/'+SENSOR_ADDRESS)
+            .then(res => res.json())
+            .then(data => {
+                //console.log(data);
+                const c = {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sensor '+SENSOR_ADDRESS,
+                        backgroundColor: 'rgb(255, 99, 132)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        data: data,
+                    }]
+                };
+                const config = {
+                type: 'line',
+                data: c,
+                options: {
+                    scales: {
+                        yAxes: {
+                            min: 0,
+                            max: 3000
+                        }
+                    },
+                }
+                };
+                
+                var myChart = new Chart(
+                    document.getElementById('myChart'),
+                    config
+                );
+                
+                setInterval(() => {
+                    fetch('/api/sensor/'+SENSOR_ADDRESS)
+                    .then(res => res.json())
+                    .then(data => {
+                        //console.log(data);
+                        myChart.data.datasets[0].data = data;
+                        myChart.update();
+                    })
+                }, 5000)
+            })
+        </script>
+    </div>
+    
+</body>
+</html>

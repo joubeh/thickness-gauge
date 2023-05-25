@@ -1,0 +1,54 @@
+<div class="container mt-3">
+    <form action="/product/create" method="post">
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="name" class="form-label">نام محصول</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3 col">
+                <label for="sheet_type" class="form-label">نوع ورق</label>
+                <input type="text" class="form-control" id="sheet_type" name="sheet_type" required>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="thickness" class="form-label">ضخامت</label>
+                <input type="text" class="form-control" id="thickness" name="thickness" required>
+            </div>
+            <div class="mb-3 col">
+                <label for="color" class="form-label">رنگ</label>
+                <input type="text" class="form-control" id="color" name="color" required>
+            </div>
+        </div>
+        <div class="row">
+            <div class="mb-3 col">
+                <label for="thread_thickness" class="form-label">ضخامت نخ</label>
+                <input type="text" class="form-control" id="thread_thickness" name="thread_thickness" required>
+            </div>
+            <div class="mb-3 col">
+                <label for="line_speed" class="form-label">سرعت خط</label>
+                <input type="text" class="form-control" id="line_speed" name="line_speed" required>
+            </div>
+        </div>
+        <hr>
+        <table class="table table-striped border-primary table-bordered">
+            <thead class="table-primary">
+                <tr>
+                    <th scope="col">سنسور</th>
+                    <th scope="col">مینیمم QC</th>
+                    <th scope="col">ماکسیمم QC</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% for(let i=0; i<sensors.length; i++){ %>
+                    <tr>
+                        <td><%= sensors[i].address %></td>
+                        <td><input type="number" class="form-control" name="minscfg<%= sensors[i].address %>" required></td>
+                        <td><input type="number" class="form-control" name="maxscfg<%= sensors[i].address %>" required></td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">ذخیره</button>
+    </form>
+</div>

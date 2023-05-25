@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="shortcut icon" href="/assets/img/icons/icon-48x48.png" />
+	<title>ضخامت سنج</title>
+	<script src="/assets/bootstrap.bundle.min.js"></script>
+	<link href="/assets/bootstrap.min.css" rel="stylesheet">
+	<link href="/assets/css/app.css" rel="stylesheet">
+    <script src="/assets/chart.umd.min.js"></script>
+    <link href="/assets/mds.bs.datetimepicker.style.css" rel="stylesheet"/>
+    <script src="/assets/mds.bs.datetimepicker.js"></script>
+	<style>
+		@font-face {
+			font-family: vazir;
+			src: url('/assets/fonts/vazir.woff');
+		}
+	</style>
+</head>
+
+<body style="font-family: vazir;">
+	<div class="wrapper">
+		<nav id="sidebar" class="sidebar js-sidebar">
+			<div class="sidebar-content js-simplebar">
+				<a class="sidebar-brand" href="/">
+					<span class="align-middle">ضخامت سنج</span>
+				</a>
+
+				<ul class="sidebar-nav">
+					<li class="sidebar-header">
+						برنامه
+					</li>
+					<li class="sidebar-item" id="navDashboard">
+						<a class="sidebar-link" href="/">
+							<i class="align-middle" data-feather="sliders"></i> <span class="align-middle">داشبورد</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						تنظیمات اپراتور
+					</li>
+					<li class="sidebar-item" id="navProducts">
+						<a class="sidebar-link" href="/products">
+							<i class="align-middle" data-feather="list"></i> <span class="align-middle">لیست محصولات</span>
+						</a>
+					</li>
+					<li class="sidebar-item" id="navCreateProduct">
+						<a class="sidebar-link" href="/product/create">
+							<i class="align-middle" data-feather="plus"></i> <span class="align-middle">افزودن محصول</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						گزارش
+					</li>
+					<li class="sidebar-item" id="navErrorReporting">
+						<a class="sidebar-link" href="/report/error-reporting">
+							<i class="align-middle" data-feather="alert-triangle"></i> <span class="align-middle">گزارش خطا</span>
+						</a>
+					</li>
+					<li class="sidebar-item" id="navProductionReporting">
+						<a class="sidebar-link" href="/report/production-report">
+							<i class="align-middle" data-feather="clipboard"></i> <span class="align-middle">گزارش تولید</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						تنظیمات
+					</li>
+					<li class="sidebar-item" id="navSetting">
+						<a class="sidebar-link" href="/setting">
+							<i class="align-middle" data-feather="sliders"></i> <span class="align-middle">تنظیمات دستگاه</span>
+						</a>
+					</li>
+                    <script>
+                        switch (window.location.pathname) {
+                            case "/":
+                                document.getElementById('navDashboard').classList.add('active');
+                                break;
+                            case "/products":
+                                document.getElementById('navProducts').classList.add('active');
+                                break;
+                            case "/product/create":
+                                document.getElementById('navCreateProduct').classList.add('active');
+                                break;
+                            case "/report/error-reporting":
+                                document.getElementById('navErrorReporting').classList.add('active');
+                                break;
+                            case "/report/production-report":
+                                document.getElementById('navProductionReporting').classList.add('active');
+                                break;
+                            case "/setting":
+                                document.getElementById('navSetting').classList.add('active');
+                                break;
+                            default:
+                                break;
+                        }
+                    </script>
+				</ul>
+			</div>
+		</nav>
+
+		<div class="main">
+			<nav class="navbar navbar-expand navbar-light navbar-bg">
+				<a id="ttt" class="sidebar-toggle js-sidebar-toggle">
+					<i class="hamburger align-self-center"></i>
+				</a>
+
+				<div class="navbar-collapse collapse">
+					<ul class="navbar-nav navbar-align">
+						<% if(setting && setting.device_status == 'stopped') { %>
+							<li class="nav-item" title="شروع">
+								<form action="/device/start" method="post" id="devStatStartF">
+									<div class="nav-icon position-relative" style="cursor: pointer;" id="devStatStartB">
+										<i class="align-middle" data-feather="play"></i>
+									</div>
+									<script>
+										document.getElementById('devStatStartB').addEventListener('click', function (e) {
+											document.getElementById('devStatStartF').submit();
+										})
+									</script>
+								</form>
+							</li>
+							<li class="nav-item" title="اسکن">
+								<form action="/device/scan" method="post" id="devStatScanF">
+									<div class="nav-icon position-relative" style="cursor: pointer;" id="devStatScanB">
+										<i class="align-middle" data-feather="download"></i>
+									</div>
+									<script>
+										document.getElementById('devStatScanB').addEventListener('click', function (e) {
+											document.getElementById('devStatScanF').submit();
+										})
+									</script>
+								</form>
+							</li>
+							<li class="nav-item" title="تست جک">
+								<form action="/device/test" method="post" id="devStatTestF">
+									<div class="nav-icon position-relative" style="cursor: pointer;" id="devStatTestB">
+										<i class="align-middle" data-feather="check-circle"></i>
+									</div>
+									<script>
+										document.getElementById('devStatTestB').addEventListener('click', function (e) {
+											document.getElementById('devStatTestF').submit();
+										})
+									</script>
+								</form>
+							</li>
+							
+							
+							<li class="nav-item">
+								<div class="nav-icon position-relative">
+									<span class="align-middle">متوقف</span>
+								</div>
+							</li>
+						<% } else if(setting && setting.device_status == 'started') { %>
+							<li class="nav-item" title="توقف">
+								<form action="/device/stop" method="post" id="devStatStopF">
+									<div class="nav-icon position-relative" style="cursor: pointer;" id="devStatStopB">
+										<i class="align-middle" data-feather="pause"></i>
+									</div>
+									<script>
+										document.getElementById('devStatStopB').addEventListener('click', function (e) {
+											document.getElementById('devStatStopF').submit();
+										})
+									</script>
+								</form>
+							</li>
+							<li class="nav-item">
+								<a class="nav-icon" href="#">
+									<div class="position-relative">
+										<span class="align-middle">در حال کار</span>
+									</div>
+								</a>
+							</li>
+						<% } %>
+					</ul>
+				</div>
+			</nav>
+
+			<main dir="rtl" style="padding: 5px;">
+				<%- body %>
+			</main>
+		</div>
+	</div>
+	<script src="/assets/js/app.js"></script>
+</body>
+</html>

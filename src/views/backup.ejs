@@ -1,0 +1,218 @@
+<div class="container mt-3">
+    <style>
+        .thead {
+            background-color: rgb(73, 80, 87); 
+            border: 2px solid rgb(73, 80, 87); 
+            padding: 10px;
+            text-align: center;
+            color: white;
+        }
+        .ok {
+            background-color: green;
+            color: white; 
+            border: 2px solid green; 
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .error {
+            background-color: red;
+            color: white; 
+            border: 2px solid red; 
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .na {
+            background-color: white;
+            color: white;
+            border: 2px solid white; 
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" dir="ltr">
+            <h1 class="modal-title fs-5" id="exampleModalLabel"></h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3" id="modal_info" style="text-align: center;"></div>
+                <div>
+                    <canvas id="modalChart"></canvas>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <h4>لطفا روز را انتخاب کنید</h4>
+    <div class="input-group mb-3" dir="ltr">
+        
+        <input type="text" class="text-center form-control" data-name="dtp1-text" disabled />
+        <span class="input-group-text cursor-pointer" id="dtp1">📅</span>
+        <input type="text" class="text-center form-control" data-name="dtp1-date" disabled id="seld"/>
+    </div>
+    <div id="table_container" style="overflow:scroll; display: none;">
+        <div style="display: flex;">
+            <div id="run_cols">
+                <div class="thead">
+                    #
+                </div>
+            </div>
+            <% for(let i=0; i<1440; i+=reportPeriod) { %>
+                <div id="qc_col<%= (i-(i % 60))/60 %>:<%= i % 60 %>">
+                    <div class="thead">
+                        <%= (i-(i % 60))/60 %>:<%= i % 60 %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    <div id="pending" style="display: none; align-items: center; justify-content: center; gap: 10px;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <script>
+        let REPORT_PERIOD = <%= reportPeriod %>;
+        let times = []
+        for(let i=0; i<1440; i+=REPORT_PERIOD) {
+            times.push(`${(i-(i % 60))/60}:${i % 60}`)
+        }
+        let dtable = {}
+        alreadyUsed = false
+
+        let myModal = new bootstrap.Modal(document.getElementById('exampleModal'), {});
+        let addresses = []
+        let colors = []
+        let barHeights = []
+        
+        const c = {
+            labels: addresses,
+            datasets: [{
+                label: 'Sensors',
+                backgroundColor: colors,
+                borderColor: colors,
+                data: barHeights,
+                maxBarThickness: '20'
+            }]
+        };
+        const config = {
+            type: 'bar',
+            data: c,
+            options: {}
+        };
+        const ctx = document.getElementById('modalChart')
+        var myChart = new Chart(
+            ctx,
+            config
+        );
+
+        function showChart(parseds) {
+            console.log(parseds);
+            addresses = []
+            colors = []
+            barHeights = []
+
+            parseds.data.forEach(p => {
+                addresses.push(p.address)
+                if(p.qc == 1) colors.push('rgb(25, 135, 84)')
+                else colors.push('rgb(220, 53, 69)')
+                barHeights.push(p.barHeight)
+            })
+
+            myChart.data.labels = addresses;
+            myChart.data.datasets[0].backgroundColor = colors;
+            myChart.data.datasets[0].borderColor = colors;
+            myChart.data.datasets[0].data = barHeights;
+            myChart.update();
+
+            document.getElementById('modal_info').innerHTML = new Date(parseds.createdAt)
+
+            myModal.show();
+        }
+
+
+        const dtp1Instance = new mds.MdsPersianDateTimePicker(document.getElementById('dtp1'), {
+            targetTextSelector: '[data-name="dtp1-text"]',
+            targetDateSelector: '[data-name="dtp1-date"]',
+            onDayClick: () => {
+                if(alreadyUsed) {
+                    window.location.reload();
+                    return;
+                }
+                document.getElementById('pending').style.display = 'flex';
+                alreadyUsed = true;
+
+                let dstr = document.getElementById('seld').value.replaceAll('/', '-');
+                fetch(`/api/report/error-reporting/${dstr}/runs`)
+                .then(res => res.json())
+                .then(druns => {
+                    let runs = druns;
+                    runs.forEach(r => {
+                        dtable[r.id] = {
+                            name: r.name,
+                            data: []
+                        }
+                        let run_col = document.createElement('div')
+                        run_col.classList.add('thead');
+                        run_col.innerText = r.name
+                        document.getElementById('run_cols').appendChild(run_col)
+                    });
+
+                    let parseds = {};
+                    for(let i=0; i<times.length; i++){
+                        fetch(`/api/report/error-reporting/${dstr}/parsed/${times[i]}`)
+                        .then(res => res.json())
+                        .then(dparsed => {
+                            if(dparsed.length == 1){
+                                parseds[times[i]] = dparsed[0]
+                            } else {
+                                parseds[times[i]] = null
+                            }
+
+                            if(Object.keys(parseds).length == times.length){
+                                Object.keys(dtable).forEach(dt => {
+                                    Object.entries(parseds).forEach(parr => {
+                                       let p = parr[1]
+                                       if(p == null || p.run_id != parseInt(dt)){
+                                        dtable[dt].data.push(null)
+
+                                        let run_col = document.createElement('div')
+                                        run_col.classList.add('na');
+                                        run_col.innerText = 'S'
+                                        document.getElementById(`qc_col${times[dtable[dt].data.length-1]}`).appendChild(run_col)
+
+                                       } else {
+                                            p.data = JSON.parse(p.data)
+                                            dtable[dt].data.push(p)
+
+                                            let errNum = 0
+                                            p.data.forEach(cqc => {
+                                                if(cqc.qc != 1) errNum++
+                                            });
+                                            let run_col = document.createElement('div')
+                                            if(errNum > 0) run_col.classList.add('error');
+                                            else run_col.classList.add('ok');
+                                            run_col.innerText = `${errNum}`
+                                            run_col.addEventListener('click', function (e) {
+                                                showChart(p);
+                                            })
+                                            document.getElementById(`qc_col${times[dtable[dt].data.length-1]}`).appendChild(run_col)
+                                       }
+                                    });
+                                });
+                                document.getElementById('pending').style.display = 'none';
+                                document.getElementById('table_container').style.display = 'block';
+                            }
+                        })
+                    }
+                })
+            }
+        });
+    </script>
+</div>

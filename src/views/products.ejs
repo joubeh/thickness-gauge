@@ -1,0 +1,31 @@
+<div class="container mt-3">
+    <h3>محصولات</h3>
+    <table class="table table-striped border-primary table-bordered">
+        <thead class="table-primary">
+            <tr>
+                <th scope="col"><center>#</center></th>
+                <th scope="col"><center>نام</center></th>
+                <th scope="col"><center>نوع ورق</center></th>
+                <th scope="col"><center>ضخامت</center></th>
+                <th scope="col"><center>رنگ</center></th>
+                <th scope="col"><center>ضخامت نخ</center></th>
+                <th scope="col"><center>سرعت خط</center></th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% for(let i=0; i<products.length; i++){ %>
+                <tr>
+                    <td><center><%= products[i].id %></center></td>
+                    <td><center><%= products[i].name %></center></td>
+                    <td><center><%= products[i].sheet_type %></center></td>
+                    <td><center><%= products[i].thickness %></center></td>
+                    <td><center><%= products[i].color %></center></td>
+                    <td><center><%= products[i].thread_thickness %></center></td>
+                    <td><center><%= products[i].line_speed %></center></td>
+                    <td><center><a href="/product/<%= products[i].id %>/edit" class="btn btn-warning">ویرایش</a></center></td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>

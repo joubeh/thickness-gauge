@@ -1,0 +1,280 @@
+<div class="m-3">
+    <div class="row">
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mt-0">
+                            <h5 class="card-title">مقادیر مجاز</h5>
+                        </div>
+    
+                        <div class="col-auto">
+                            <div class="stat text-primary">
+                                <i class="align-middle" data-feather="check"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h1 class="mt-1" id="ok_senesors"></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mt-0">
+                            <h5 class="card-title">مقادیر خارج از رنج</h5>
+                        </div>
+    
+                        <div class="col-auto">
+                            <div class="stat text-primary">
+                                <i class="align-middle" data-feather="alert-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h1 class="mt-1" id="bad_senesors"></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mt-0">
+                            <h5 class="card-title">تعداد سنسورها</h5>
+                        </div>
+    
+                        <div class="col-auto">
+                            <div class="stat text-primary">
+                                <i class="align-middle" data-feather="cpu"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h1 class="mt-1" id="senesors_count"></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mt-0">
+                            <h5 class="card-title">زمان تا اسکن بعدی</h5>
+                        </div>
+    
+                        <div class="col-auto">
+                            <div class="stat text-primary">
+                                <i class="align-middle" data-feather="clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h1 class="mt-1" id="scan_time">0</h1>
+                    <script>
+                        function sec2time(sec){
+                            let h = Math.floor(sec/3600)
+                            sec %= 3600;
+                            let m = Math.floor(sec/60)
+                            let s = sec % 60
+                            return `${h}:${m}:${s}`
+                        }
+
+                        let lastScan = "<%= setting.last_scan %>"
+                        let scanPeriod = parseInt("<%= setting.scan_time %>") * 3600
+                        let now = new Date()
+                        let lastScanDate = new Date(lastScan)
+                        let remaining = scanPeriod - Math.floor((now - lastScanDate) / 1000)
+                        setInterval(() => {
+                            remaining--
+                            document.getElementById('scan_time').innerHTML = sec2time(remaining)
+                        }, 1000);
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="height: 80vh;"><canvas id="myChart"></canvas></div>
+    
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header" dir="ltr">
+              <h1 class="modal-title fs-5" id="exampleModalLabel"></h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3" id="scoutBarStatus"></div>
+              <div>
+                <% if(setting.device_status == 'started') { %>
+                    <canvas id="modalChart"></canvas>
+                <% } %>
+              </div>
+            </div>
+            <div class="modal-footer" id="modalRamainingTime">
+                
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <% if(setting.device_status == 'started') { %>
+    <script>
+        let addresses = []
+        let colors = []
+        let barHeights = []
+        
+        const c = {
+            labels: addresses,
+            datasets: [{
+                label: 'Sensors',
+                backgroundColor: colors,
+                borderColor: colors,
+                data: barHeights,
+                maxBarThickness: '20'
+            }]
+        };
+        const config = {
+            type: 'bar',
+            data: c,
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+            }
+        };
+        const ctx = document.getElementById('myChart')
+        var myChart = new Chart(
+            ctx,
+            config
+        );
+        document.getElementById('ttt').click()
+        setInterval(() => {
+            fetch('/api/sensors/parsed')
+            .then(res => res.json())
+            .then(sensorsParsedData => {
+                addresses = []
+                colors = []
+                barHeights = []
+                let errCount = 0
+
+                sensorsParsedData.forEach(d => {
+                    addresses.push(d.address)
+                    if(d.qc == 1) colors.push('rgb(25, 135, 84)')
+                    else {
+                        colors.push('rgb(220, 53, 69)')
+                        errCount++
+                    }
+                    barHeights.push(d.barHeight)
+                })
+
+                myChart.data.labels = addresses;
+                myChart.data.datasets[0].backgroundColor = colors;
+                myChart.data.datasets[0].borderColor = colors;
+                myChart.data.datasets[0].data = barHeights;
+                myChart.update();
+
+                document.getElementById("senesors_count").innerHTML = addresses.length
+                document.getElementById("bad_senesors").innerHTML = errCount
+                document.getElementById("ok_senesors").innerHTML = addresses.length - errCount
+            }).catch(e => console.log(e))
+        }, 2000)
+
+        var modalChart = new Chart(
+            document.getElementById('modalChart'),
+            {
+                type: 'bar',
+                data: {
+                    labels: ['sensor'],
+                    datasets: [{
+                        label: 'Sensor ',
+                        backgroundColor: 'rgb(220, 53, 69)',
+                        borderColor: 'rgb(220, 53, 69)',
+                        data: [1],
+                        maxBarThickness: '20'
+                    }]
+                },
+                options: {}
+            }
+        );
+
+        let scoutAddress
+        let scoutInterval
+
+        function startScout(){
+            let scoutBarStatus = document.getElementById('scoutBarStatus')
+            scoutBarStatus.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div><span>در حال راه اندازی مشکل یاب...</span>'
+            fetch(`/api/sensor/${scoutAddress}/scout/start`)
+            .then(res => {
+                console.log('scout started for '+scoutAddress)
+                scoutInterval = setInterval(() => {
+                    fetch('/api/scout')
+                    .then(res => res.json())
+                    .then(sr => {
+                        if(sr.address == scoutAddress){
+                            modalChart.data.datasets[0].data = [sr.barHeight];
+                            if(sr.qc == 1){
+                                scoutBarStatus.innerHTML = "وضعیت : در رنج مجاز"
+                                modalChart.data.datasets[0].backgroundColor = 'rgb(25, 135, 84)';
+                                modalChart.data.datasets[0].borderColor = 'rgb(25, 135, 84)';
+                            } else if(sr.qc == 0){
+                                scoutBarStatus.innerHTML = "وضعیت : کمتر از مینیمم"
+                                modalChart.data.datasets[0].backgroundColor = 'rgb(220, 53, 69)';
+                                modalChart.data.datasets[0].borderColor = 'rgb(220, 53, 69)';
+                            } else {
+                                scoutBarStatus.innerHTML = "وضعیت : بیشتر از ماکسیمم"
+                                modalChart.data.datasets[0].backgroundColor = 'rgb(220, 53, 69)';
+                                modalChart.data.datasets[0].borderColor = 'rgb(220, 53, 69)';
+                            }
+                            modalChart.update();
+                        }
+                    }).catch(e => console.log(e))
+                }, 1000)
+            })
+            .catch(e => console.log(e))
+        }
+
+        function stopScout(){
+            fetch(`/api/sensor/${scoutAddress}/scout/stop`)
+            .then(res => {
+                console.log('scout stopped for '+scoutAddress)
+                clearInterval(scoutInterval)
+            })
+            .catch(e => console.log(e))
+        }
+
+        let myModal = new bootstrap.Modal(document.getElementById('exampleModal'), {});
+
+        let modalTimer;
+        function startModalTimer(){
+            let TIMEOUT = parseInt('<%= setting.popup_time %>')
+            let modalRamainingTime = document.getElementById('modalRamainingTime');
+            modalRamainingTime.innerHTML = `${TIMEOUT}s`
+            modalTimer = setInterval(() => {
+                if(!myModal._isShown) {
+                    stopScout();
+                    clearInterval(modalTimer);
+                }
+                TIMEOUT--;
+                modalRamainingTime.innerHTML = `${TIMEOUT}s`
+                if(TIMEOUT == 0) {
+                    stopScout();
+                    myModal.hide();
+                }
+            }, 1000);
+        } 
+
+        function clickHandler(click){
+            const points = myChart.getElementsAtEventForMode(click, 'nearest', {
+                intersect: true
+            }, true)
+            scoutAddress = addresses[points[0].index]
+            document.getElementById('exampleModalLabel').innerText = 'Sensor ' + addresses[points[0].index];
+            modalChart.data.datasets[0].label = 'Sensor ' + addresses[points[0].index];
+            modalChart.update();
+            startScout();
+            startModalTimer();
+            myModal.show();
+        }
+
+        ctx.onclick = clickHandler;
+    </script>
+    <% } %>
+</div>

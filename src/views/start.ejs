@@ -1,0 +1,12 @@
+<div class="container mt-3">
+    <h1 class="mb-3">محصول را انتخاب کنید</h1>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: 10px;">
+        <% for(let i=0; i<products.length; i++) { %>
+            <div>
+                <form action="/device/start/product/<%= products[i].id %>" method="post">
+                    <button class="btn btn-primary"><%= products[i].name %></button>
+                </form>
+            </div>
+        <% } %>
+    </div>
+</div>
